@@ -1,5 +1,7 @@
-const mongoose = require("mongoose");
+// Third party imports
+const { Schema, model } = require("mongoose");
 const uuidv1 = require('uuid/v1');
+// Node imports
 const crypto = require('crypto');
 /**
  * This is the user schema! Not much to worry about regarding name, email and created. But the hashed
@@ -7,7 +9,7 @@ const crypto = require('crypto');
  * input and hashes it with a randomly generated salt. The result is then stored in the 'hashed_password'
  * field.  
  */
-const userSchema = new mongoose.Schema({
+const userSchema = new Schema({
     name: {
         type: String,
         required: "Name is required",
@@ -32,7 +34,7 @@ const userSchema = new mongoose.Schema({
 })
 
 userSchema.virtual('password')
-    .set((password) => {
+    .set(function(password) {
         // create temporary variable _password
         this._password = password;
         // generate a salt
@@ -40,8 +42,8 @@ userSchema.virtual('password')
         // encrypt the password using the method encryptPassword which belongs to the user schema
         this.hashed_password = this.encryptPassword(password);
     })
-    .get(() => {
-        return this.password;
+    .get(function() {
+        return this._password;
     })
 
 //#region methods
@@ -51,7 +53,7 @@ userSchema.methods = {
      * null. otherwise, it tries to createHmac() with the this.salt generated earlier above. 
      * After that, it updates the password.
      */
-    encryptPassword: (password) => {
+    encryptPassword: function(password) {
         if (!password) return "";
         try {
             return crypto.createHmac('sha1', this.salt)
@@ -63,5 +65,6 @@ userSchema.methods = {
         }
     }
 }
+//#endregion
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = model("User", userSchema);
